@@ -8,17 +8,28 @@ const { validationResult } = require('express-validator');
 const crearUsuario = async( req,res = response )=>{
    console.log(req.body);
 
-   // const { name, email, password } = req.body;
+   const { name, email, password } = req.body;
 
    try {
+      
+      let usuario = await Usuario.findOne({ email })
+      console.log(usuario);
 
-      const usuario = new Usuario( req.body );
+      if( usuario ){
+         res.status(400).json({
+            ok: false,
+            msg: 'El correo del usuario ya está registrado'
+         })
+      }
+
+      usuario = new Usuario( req.body );
    
       await usuario.save();
       
       res.status(201).json({
          ok: true,
-         msg: 'registro'
+         uid: usuario.id,
+         name: usuario.name
       });
 
    } catch(err) {
