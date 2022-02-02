@@ -7,14 +7,14 @@ const { validationResult } = require('express-validator');
 
 
 const crearUsuario = async( req,res = response )=>{
-   console.log(req.body);
+   // console.log(req.body);
 
-   const { name, email, password } = req.body;
+   const { email, password } = req.body;
 
    try {
       
       let usuario = await Usuario.findOne({ email })
-      console.log(usuario);
+      // console.log(usuario);
 
       if( usuario ){
          res.status(400).json({
@@ -30,8 +30,6 @@ const crearUsuario = async( req,res = response )=>{
       usuario.password = bcrypt.hashSync( password, salt );
    
       await usuario.save();
-
-
       
       res.status(201).json({
          ok: true,
@@ -45,7 +43,7 @@ const crearUsuario = async( req,res = response )=>{
 
       res.status(500).json({
          ok: false,
-         msg:'Error en el servidor'
+         msg:'Error en el servidor, crar usuario'
       })
 
    }
@@ -53,16 +51,53 @@ const crearUsuario = async( req,res = response )=>{
 
 };
 
-const loginUsuario = ( req, res = response )=>{
+const loginUsuario = async( req, res = response )=>{
 
    const { email, password } = req.body;
-   
-   res.json({
-      ok: true,
-      msg: 'login',
-      email,
-      password
-   })
+
+   try {
+
+      const usuario = await Usuario.findOne({email});
+      console.log('usuario===', usuario );
+
+      if( !usuario ){
+         return res.status(400).json({
+            ok: false,
+            msg: 'Usuario o contraseña incorrecta: dev[email]'
+         });
+      }
+
+      // confirmar passwords
+      const validPassword = bcrypt.compareSync( password, usuario.password );
+      console.log( validPassword );
+      if( !validPassword ){
+         return res.status(400).json({
+            ok: false,
+            msg: 'Usuario o contraseña incorrecta: dev[password]'
+         })
+      }
+
+      //Generar JWT   
+
+      res.json({
+         ok: true,
+         msg: 'login',
+         uid: usuario.id,
+         name: usuario.name
+       
+      })
+      
+
+   } catch(err) {
+
+      console.log(err);
+
+      res.status(500).json({
+         ok: false,
+         msg:'Error en el servidor login usuario'
+      })
+
+   }
 };
 
 const revalidarToken = ( req, res = response )=>{
